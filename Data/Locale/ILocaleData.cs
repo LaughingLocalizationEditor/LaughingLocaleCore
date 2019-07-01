@@ -1,5 +1,6 @@
 ﻿using LaughingLocale.Data.History;
 using LaughingLocale.ViewModel;
+using LaughingLocale.ViewModel.Locale;
 using System;
 using System.Collections.Generic;
 using System.Text;

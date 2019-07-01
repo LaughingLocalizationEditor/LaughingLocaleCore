@@ -1,16 +1,20 @@
-﻿using LaughingLocale.Data.History;
-using Reactive.Bindings;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows.Input;
+using LaughingLocale.Data;
+using LaughingLocale.Data.History;
+using LaughingLocale.Data.Locale;
+using LaughingLocale.ViewModel.Locale;
+//using Reactive.Bindings;
+using ReactiveUI;
 
-namespace LaughingLocale.Data.Locale
+namespace LaughingLocale.ViewModel.Locale
 {
 	public interface ILocaleGroup : ICommittable
 	{
-		List<ILocaleEntryContainer> Entries { get; set; }
+		List<ILocaleContainer> Entries { get; set; }
 
 		string Source { get; set; }
 		string Name { get; set; }
@@ -75,11 +79,11 @@ namespace LaughingLocale.Data.Locale
 			ChangesUncommitted = false;
 		}
 
-		List<ILocaleEntryContainer> Entries { get; set; } = new List<ILocaleEntryContainer>();
+		public List<ILocaleContainer> Entries { get; set; } = new List<ILocaleContainer>();
 
-		private ILocaleEntryContainer all;
+		private ILocaleContainer all;
 
-		public ILocaleEntryContainer All
+		public ILocaleContainer All
 		{
 			get { return all; }
 			private set
@@ -88,11 +92,11 @@ namespace LaughingLocale.Data.Locale
 			}
 		}
 
-		List<ILocaleEntryContainer> DisplayedEntries { get; set; } = new List<ILocaleEntryContainer>();
+		public List<ILocaleContainer> DisplayedEntries { get; private set; } = new List<ILocaleContainer>();
 
 		public void UpdateCombinedData()
 		{
-			DisplayedEntries = new List<ILocaleEntryContainer>();
+			DisplayedEntries = new List<ILocaleContainer>();
 
 			if (All != null)
 			{
@@ -117,7 +121,7 @@ namespace LaughingLocale.Data.Locale
 			Notify("DisplayedEntries");
 		}
 
-		public Action<ILocaleGroup, ILocaleEntryContainer> SelectedFileChanged { get; set; }
+		public Action<ILocaleGroup, ILocaleContainer> SelectedFileChanged { get; set; }
 
 		private int selectedfileIndex = 0;
 
@@ -132,7 +136,7 @@ namespace LaughingLocale.Data.Locale
 			}
 		}
 
-		public ILocaleEntryContainer SelectedFile
+		public ILocaleContainer SelectedFile
 		{
 			get
 			{
@@ -163,11 +167,11 @@ namespace LaughingLocale.Data.Locale
 			SelectedFileIndex = DisplayedEntries.Count - 1;
 		}
 
-		public LocaleTabGroup(string name = "")
+		public LocaleGroup(string name = "")
 		{
 			Name = name;
 
-			UpdateAllCommand = new Comman(UpdateCombinedData);
+			UpdateAllCommand = ReactiveCommand.Create(UpdateCombinedData);
 		}
 	}
 }

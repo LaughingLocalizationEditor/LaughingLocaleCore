@@ -9,56 +9,72 @@ using System.Reflection;
 using System.Windows.Input;
 using System.Collections.Generic;
 using LaughingLocale.Data.History;
+using LaughingLocale.Data;
 
 namespace LaughingLocale.ViewModel
 {
 	public interface IHistoryViewModel
 	{
-		IHistory History { get; set; }
+		IHistory History { get; }
 
 		void Undo();
 		void Redo();
 	}
 
-	public abstract class HistoryViewModel : IDisposable
+	public static class HistoryViewModelExtensions
+	{
+		public static void ChangeListWithHistory<T>(this IHistoryViewModel vm, IList<T> source, IList<T> oldValue, IList<T> newValue)
+		{
+			if (vm.History != null)
+			{
+				void undo() => source = oldValue;
+				void redo() => source = newValue;
+				vm.History.Snapshot(undo, redo);
+				source = newValue;
+			}
+		}
+
+		public static void AddWithHistory<T>(this IHistoryViewModel vm, IList<T> source, T item)
+		{
+			if (vm.History != null)
+			{
+				int index = source.Count;
+				void redo() => source.Insert(index, item);
+				void undo() => source.RemoveAt(index);
+				vm.History.Snapshot(undo, redo);
+				redo();
+			}
+		}
+
+		public static void RemoveWithHistory<T>(this IHistoryViewModel vm, IList<T> source, T item)
+		{
+			if(vm.History != null)
+			{
+				int index = source.IndexOf(item);
+				void redo() => source.RemoveAt(index);
+				void undo() => source.Insert(index, item);
+				vm.History.Snapshot(undo, redo);
+				redo();
+			}
+		}
+
+		public static void CreateSnapshot(this IHistoryViewModel vm, Action undo, Action redo)
+		{
+			vm.History?.Snapshot(undo, redo);
+		}
+	}
+
+	public abstract class HistoryViewModel : BaseHistoryData, IDisposable, IHistoryViewModel
 	{
 		private CompositeDisposable Disposable { get; set; }
-
-		public IHistory History { get; private set; }
 
 		private ICommand UndoCommand { get; set; }
 		private ICommand RedoCommand { get; set; }
 		private ICommand ClearCommand { get; set; }
 
-		public void CreateSnapshot(Action undo, Action redo)
+		public void Dispose()
 		{
-			History.Snapshot(undo, redo);
-		}
-
-		public void ChangeListWithHistory<T>(IList<T> source, IList<T> oldValue, IList<T> newValue)
-		{
-			void undo() => source = oldValue;
-			void redo() => source = newValue;
-			History.Snapshot(undo, redo);
-			source = newValue;
-		}
-
-		public void AddWithHistory<T>(IList<T> source, T item)
-		{
-			int index = source.Count;
-			void redo() => source.Insert(index, item);
-			void undo() => source.RemoveAt(index);
-			History.Snapshot(undo, redo);
-			redo();
-		}
-
-		public void RemoveWithHistory<T>(IList<T> source, T item)
-		{
-			int index = source.IndexOf(item);
-			void redo() => source.RemoveAt(index);
-			void undo() => source.Insert(index, item);
-			History.Snapshot(undo, redo);
-			redo();
+			this.Disposable.Dispose();
 		}
 
 		public void Undo()
@@ -69,11 +85,6 @@ namespace LaughingLocale.ViewModel
 		public void Redo()
 		{
 			History.Redo();
-		}
-
-		public void Dispose()
-		{
-			this.Disposable.Dispose();
 		}
 
 		public HistoryViewModel()

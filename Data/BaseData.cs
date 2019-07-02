@@ -1,4 +1,7 @@
-﻿using System.ComponentModel;
+﻿using ReactiveUI;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
 namespace LaughingLocale.Data
@@ -16,8 +19,23 @@ namespace LaughingLocale.Data
 	/// Based on: https://github.com/wieslawsoltes/ReactiveHistory/blob/master/samples/ReactiveHistorySample.Models/ObservableObject.cs
 	/// (MIT License)
 	/// </summary>
-	public abstract class BaseData : INotifyPropertyChanged, IBaseData
+	public abstract class BaseData : ReactiveObject, INotifyPropertyChanged, IBaseData
 	{
+		public bool Update<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+		{
+			if(Equals(this.RaiseAndSetIfChanged(ref field, value, propertyName), value))
+			{
+				return true;
+			}
+			return false;
+		}
+
+		public void Notify(string propertyName = null)
+		{
+			this.RaisePropertyChanged(propertyName);
+		}
+
+		/*
 		public event PropertyChangedEventHandler PropertyChanged;
 
 		public virtual void OnPropertyNotify(string propertyName)
@@ -41,5 +59,6 @@ namespace LaughingLocale.Data
 			}
 			return false;
 		}
+		*/
 	}
 }
